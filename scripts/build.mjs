@@ -5,11 +5,14 @@ import {entries,byId,sources,markers,routes,timeline,componentTypes} from '../sr
 import {persianEntries} from '../src/persian.mjs';
 import {artwork,imagesFor} from '../src/artwork.mjs';
 import {chapters} from '../src/story.mjs';
-import {relationships} from '../src/relationships.mjs';
+import {relationships,relationshipIds,factions,networkPositions} from '../src/relationships.mjs';
 
+assert.deepEqual(Object.keys(networkPositions).sort(),[...relationshipIds].sort(),'Network layout must cover every node');
 const relationshipPairs = new Set();
-for (const {first,second,description,citations} of relationships) {
+for (const {first,second,description,citations,start,end,factions:affiliations} of relationships) {
  assert.ok(byId[first] && byId[second] && first !== second,'Invalid relationship: '+first+' / '+second);
+ assert.ok(Number.isInteger(start) && start<=end && end<=1858 && start>=1710,'Invalid dates for '+first+' / '+second);
+ assert.ok(affiliations.length && affiliations.every(id=>Object.hasOwn(factions,id)),'Invalid faction for '+first+' / '+second);
  assert.ok(description.every(Boolean) && citations.length,'Missing relationship text or source');
  for (const id of citations) assert.ok(Object.hasOwn(sources,id),'Missing relationship source '+id);
  const pair = [first,second].sort().join('/');

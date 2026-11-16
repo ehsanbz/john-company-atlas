@@ -236,7 +236,23 @@ const persian = {
   "Read historical profile": "خواندن پروندهٔ تاریخی",
   "Related game cards": "کارت‌های بازی مرتبط",
   "Company and Parliament diagram": "نمودار کمپانی و پارلمان",
-  "Explore relationships": "کاوش در روابط"
+  "Explore relationships": "کاوش در روابط",
+  "Full network": "شبکهٔ کامل",
+  "Historical relationships": "روابط تاریخی",
+  "Select a node to open its focused map and find related profiles and game cards.": "برای دیدن نقشهٔ متمرکز، پرونده‌های مرتبط و کارت‌های بازی، یک گره را انتخاب کنید.",
+  "Time period": "دورهٔ زمانی",
+  "All periods": "همهٔ دوره‌ها",
+  "Faction": "گروه سیاسی",
+  "All factions": "همهٔ گروه‌ها",
+  "Apply filters": "اعمال فیلترها",
+  "Reset network filters": "بازنشانی فیلترهای شبکه",
+  "Dates are approximate for long-running relationships. Faction filters include relationships involving the selected faction.": "تاریخ‌ها برای روابط بلندمدت تقریبی‌اند. فیلتر گروه سیاسی، پیوندهای مربوط به گروه انتخاب‌شده را نشان می‌دهد.",
+  " nodes · ": " گره · ",
+  " relationships": " پیوند",
+  "No relationships match these filters.": "پیوندی مطابق این فیلترها یافت نشد.",
+  "Relationship network graph. Scroll to view all nodes.": "نمودار شبکهٔ روابط. برای دیدن همهٔ گره‌ها پیمایش کنید.",
+  "Scroll to explore the graph. The relationship list follows below.": "برای کاوش در نمودار پیمایش کنید. فهرست پیوندها در ادامه آمده است.",
+  "Back to filtered network": "بازگشت به شبکه با فیلترهای انتخاب‌شده"
 };
 
 export const translate = (text, language) => language === 'fa' && Object.hasOwn(persian,text) ? persian[text] : text;

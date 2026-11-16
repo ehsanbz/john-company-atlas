@@ -6,6 +6,8 @@ import {imagesFor,imagePath} from './artwork.mjs';
 import {chapters} from './story.mjs';
 import {relationships,relationshipIds,relationshipKind} from './relationships.mjs';
 
+import {showNetwork,drawRelationshipLines} from './network.mjs';
+
 const main = document.querySelector('main');
 const params = new URLSearchParams(location.search);
 const language = params.get('lang') === 'fa' ? 'fa' : 'en';
@@ -265,6 +267,9 @@ function timelinePage(){
  if (focused) document.getElementById(focused.id)?.scrollIntoView();
 }
 function relationshipsPage(){
+ if (!params.has('selected')) return showNetwork({params,byId,t,bilingual,number,set,heading,escape,link,cite,tag,main});
+ const networkQuery = new URLSearchParams(params);
+ networkQuery.delete('selected');
  const requested = params.get('selected');
  const selected = byId[relationshipIds.includes(requested) ? requested : 'bengal'];
  const connections = relationships
@@ -286,14 +291,17 @@ function relationshipsPage(){
  const node = ({other},index) => `
   <a class="relation-node" data-kind="${relationshipKind(other)}" data-connection
      style="grid-column:${index%2===0 ? 1 : 3};grid-row:${Math.floor(index/2)+1}"
-     href="?view=relationships&selected=${other.id}">
+     href="?${networkQuery}&selected=${other.id}">
    <small>${t(relationshipKind(other))}</small>${escape(other.title)}
   </a>`;
  const title = t('Relationship map');
  set(title,heading(t('1710 — 1858'),title,t('Choose a person, polity, place, or event to see its documented connections. Follow the links for historical profiles and game cards.'))+`
   <section class="wrap">
+   <p><a href="?${networkQuery}">${params.get('period') || params.get('faction') ? t('Back to filtered network') : t('Full network')}</a></p>
    <form class="maptools" action="./">
     <input type="hidden" name="view" value="relationships">
+    <input type="hidden" name="period" value="${escape(params.get('period') || '')}">
+    <input type="hidden" name="faction" value="${escape(params.get('faction') || '')}">
     <label>${t('Focus on')}
      <select name="selected">
       ${kinds.map(kind=>`<optgroup label="${t(kind)}">
@@ -331,34 +339,8 @@ function relationshipsPage(){
    </section>
   </section>`);
  const graph = document.querySelector('.relationship-graph');
- const canvas = graph.querySelector('canvas');
  const center = graph.querySelector('.relation-center');
- const nodes = [...graph.querySelectorAll('[data-connection]')];
- const ctx = canvas.getContext('2d');
-
- function drawConnections(){
-  if (!ctx) return;
-  const bounds = graph.getBoundingClientRect();
-  const scale = window.devicePixelRatio || 1;
-  canvas.width = Math.round(bounds.width*scale);
-  canvas.height = Math.round(bounds.height*scale);
-  ctx.scale(scale,scale);
-  ctx.strokeStyle = '#9c8966';
-  ctx.lineWidth = 1.25;
-  const point = element => {
-   const rect = element.getBoundingClientRect();
-   return [rect.left-bounds.left+rect.width/2,rect.top-bounds.top+rect.height/2];
-  };
-  const origin = point(center);
-  ctx.beginPath();
-  for (const neighbor of nodes) {
-   ctx.moveTo(...origin);
-   ctx.lineTo(...point(neighbor));
-  }
-  ctx.stroke();
- }
- new ResizeObserver(drawConnections).observe(graph);
- drawConnections();
+ drawRelationshipLines(graph,[...graph.querySelectorAll('[data-connection]')].map(node=>[center,node]));
 }
 
 const institutionIds=['families','shareholders','directors','chairman','regional-administration','parliament'];
