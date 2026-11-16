@@ -252,7 +252,13 @@ const persian = {
   "No relationships match these filters.": "پیوندی مطابق این فیلترها یافت نشد.",
   "Relationship network graph. Scroll to view all nodes.": "نمودار شبکهٔ روابط. برای دیدن همهٔ گره‌ها پیمایش کنید.",
   "Scroll to explore the graph. The relationship list follows below.": "برای کاوش در نمودار پیمایش کنید. فهرست پیوندها در ادامه آمده است.",
-  "Back to filtered network": "بازگشت به شبکه با فیلترهای انتخاب‌شده"
+  "Back to filtered network": "بازگشت به شبکه با فیلترهای انتخاب‌شده",
+  "Network controls": "کنترل‌های شبکه",
+  "Zoom in": "بزرگ‌نمایی",
+  "Zoom out": "کوچک‌نمایی",
+  "Reset view": "بازنشانی نما",
+  "Drag to pan, or swipe on touchscreens. Use the zoom buttons to change scale.": "برای جابه‌جایی، نمودار را بکشید یا روی صفحهٔ لمسی انگشت بکشید. برای تغییر اندازه از دکمه‌های بزرگ‌نمایی استفاده کنید.",
+  "Relationship network graph. Drag or scroll to pan.": "نمودار شبکهٔ روابط. برای جابه‌جایی، نمودار را بکشید یا پیمایش کنید."
 };
 
 export const translate = (text, language) => language === 'fa' && Object.hasOwn(persian,text) ? persian[text] : text;

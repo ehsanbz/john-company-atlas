@@ -38,9 +38,15 @@ export function showNetwork({params,byId,t,bilingual,number,set,heading,escape,l
    <p class="intro">${t('Dates are approximate for long-running relationships. Faction filters include relationships involving the selected faction.')}</p>
    <p role="status">${number(ids.length)}${t(' nodes · ')}${number(visible.length)}${t(' relationships')}</p>
    ${ids.length ? `
-    <p class="network-scroll-hint">${t('Scroll to explore the graph. The relationship list follows below.')}</p>
-    <div class="network-scroll" role="region" tabindex="0" aria-label="${t('Relationship network graph. Scroll to view all nodes.')}">
-     <div class="full-network">
+    <div class="network-controls" role="group" aria-label="${t('Network controls')}">
+     <button type="button" data-network-zoom="in" aria-label="${t('Zoom in')}">＋</button>
+     <button type="button" data-network-zoom="out" aria-label="${t('Zoom out')}">−</button>
+     <button type="button" data-network-reset>${t('Reset view')}</button>
+     <output class="network-zoom" aria-live="polite"></output>
+    </div>
+    <p class="network-pan-help">${t('Drag to pan, or swipe on touchscreens. Use the zoom buttons to change scale.')}</p>
+    <div class="network-scroll" role="region" tabindex="0" aria-label="${t('Relationship network graph. Drag or scroll to pan.')}">
+     <div class="network-stage"><div class="full-network">
       <canvas aria-hidden="true"></canvas>
       ${ids.map(id=>{
        const [x,y]=networkPositions[id];
@@ -51,7 +57,7 @@ export function showNetwork({params,byId,t,bilingual,number,set,heading,escape,l
        </a>`;
       }).join('')}
      </div>
-    </div>
+    </div></div>
     <section class="section">
      <h2>${t('Documented connections')}</h2>
      <ul class="relationship-records">
@@ -69,6 +75,7 @@ export function showNetwork({params,byId,t,bilingual,number,set,heading,escape,l
  if (ids.length) {
   const graph = main.querySelector('.full-network');
   const nodes = new Map([...graph.querySelectorAll('[data-network-id]')].map(node=>[node.dataset.networkId,node]));
+  enableNetworkControls(main,graph,number);
   drawRelationshipLines(graph,visible.map(edge=>[nodes.get(edge.first),nodes.get(edge.second)]));
  }
 }
@@ -79,15 +86,16 @@ export function drawRelationshipLines(graph,pairs){
  if (!ctx) return;
  function redraw(){
   const bounds=graph.getBoundingClientRect();
+  const transformScale=bounds.width/graph.offsetWidth;
   const scale=window.devicePixelRatio || 1;
-  canvas.width=Math.round(bounds.width*scale);
-  canvas.height=Math.round(bounds.height*scale);
+  canvas.width=Math.round(graph.offsetWidth*scale);
+  canvas.height=Math.round(graph.offsetHeight*scale);
   ctx.scale(scale,scale);
   ctx.strokeStyle='#9c8966';
   ctx.lineWidth=1.25;
   const point=element=>{
    const rect=element.getBoundingClientRect();
-   return [rect.left-bounds.left+rect.width/2,rect.top-bounds.top+rect.height/2];
+   return [(rect.left-bounds.left+rect.width/2)/transformScale,(rect.top-bounds.top+rect.height/2)/transformScale];
   };
   ctx.beginPath();
   for (const [first,second] of pairs) {
@@ -98,4 +106,79 @@ export function drawRelationshipLines(graph,pairs){
  }
  new ResizeObserver(redraw).observe(graph);
  redraw();
+}
+
+function enableNetworkControls(main,graph,number){
+ const viewport=main.querySelector('.network-scroll');
+ const stage=main.querySelector('.network-stage');
+ const output=main.querySelector('.network-zoom');
+ const zoomIn=main.querySelector('[data-network-zoom="in"]');
+ const zoomOut=main.querySelector('[data-network-zoom="out"]');
+ let zoom=1;
+ let drag=null;
+ let suppressClick=false;
+
+ function applyZoom(next,reset=false){
+  const old=zoom;
+  const centerX=(viewport.scrollLeft+viewport.clientWidth/2)/old;
+  const centerY=(viewport.scrollTop+viewport.clientHeight/2)/old;
+  zoom=Math.max(.5,Math.min(2.5,next));
+  graph.style.transform='scale('+zoom+')';
+  stage.style.width=graph.offsetWidth*zoom+'px';
+  stage.style.height=graph.offsetHeight*zoom+'px';
+  viewport.scrollLeft=reset ? 0 : centerX*zoom-viewport.clientWidth/2;
+  viewport.scrollTop=reset ? 0 : centerY*zoom-viewport.clientHeight/2;
+  output.value=number(Math.round(zoom*100))+'%';
+  zoomIn.disabled=zoom>=2.5;
+  zoomOut.disabled=zoom<=.5;
+ }
+ zoomIn.addEventListener('click',()=>applyZoom(zoom+.25));
+ zoomOut.addEventListener('click',()=>applyZoom(zoom-.25));
+ main.querySelector('[data-network-reset]').addEventListener('click',()=>applyZoom(1,true));
+ viewport.addEventListener('pointerdown',event=>{
+  if(event.pointerType!=='mouse' || event.button!==0) return;
+  suppressClick=false;
+  drag={x:event.clientX,y:event.clientY,left:viewport.scrollLeft,top:viewport.scrollTop,moved:false};
+ });
+ viewport.addEventListener('pointermove',event=>{
+  if(!drag) return;
+  const dx=event.clientX-drag.x,dy=event.clientY-drag.y;
+  if(Math.hypot(dx,dy)>5) {
+   drag.moved=true;
+   viewport.setPointerCapture(event.pointerId);
+   viewport.classList.add('panning');
+  }
+  if(drag.moved) {
+   viewport.scrollLeft=drag.left-dx;
+   viewport.scrollTop=drag.top-dy;
+  }
+ });
+ viewport.addEventListener('pointerup',()=>{
+  suppressClick=Boolean(drag?.moved);
+  drag=null;
+  viewport.classList.remove('panning');
+ });
+ viewport.addEventListener('pointerleave',()=>{
+  if (!drag?.moved) drag=null;
+ });
+ viewport.addEventListener('pointercancel',()=>{
+  drag=null;
+  viewport.classList.remove('panning');
+ });
+ viewport.addEventListener('click',event=>{
+  if(suppressClick) {
+   event.preventDefault();
+   event.stopPropagation();
+   suppressClick=false;
+  }
+ },true);
+ viewport.addEventListener('dragstart',event=>event.preventDefault());
+ viewport.addEventListener('keydown',event=>{
+  if(event.target!==viewport) return;
+  if(event.key==='+' || event.key==='=') { event.preventDefault(); applyZoom(zoom+.25); }
+  if(event.key==='-') { event.preventDefault(); applyZoom(zoom-.25); }
+  if(event.key==='0') { event.preventDefault(); applyZoom(1,true); }
+ });
+ new ResizeObserver(()=>applyZoom(zoom)).observe(graph);
+ applyZoom(1,true);
 }

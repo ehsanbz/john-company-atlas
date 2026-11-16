@@ -52,7 +52,7 @@ export function drawMap(canvas,view,routes=[],language='en'){
    ctx.fillText(localNumber(x,language)+'°',point([x,0])[0]+4,h-10);
  }
  for(let y=Math.ceil(minY/grid)*grid;y<maxY;y+=grid){path([[minX,y],[maxX,y]]);ctx.stroke();}
- ctx.fillStyle='#e2d9b990';ctx.font=language === 'fa' ? '13px Tahoma' : 'italic 13px Georgia';
+ ctx.fillStyle='#e2d9b990';ctx.font=language === 'fa' ? '13px Vazirmatn, Tahoma' : 'italic 13px Georgia';
  labels.forEach(([name,x,y])=>ctx.fillText(translate(name,language),...point([x,y])));
  ctx.setLineDash([5,5]);ctx.lineWidth=2.3;ctx.strokeStyle='#eec984';
  routes.forEach(route=>{path(route.points);ctx.stroke();});
@@ -61,5 +61,6 @@ export function drawMap(canvas,view,routes=[],language='en'){
  ctx.strokeStyle='#e4cf946e';ctx.fillStyle='#e4cf94';ctx.lineWidth=1;
  ctx.beginPath();ctx.arc(x,y,18,0,Math.PI*2);ctx.stroke();
  ctx.beginPath();ctx.moveTo(x,y-12);ctx.lineTo(x-4,y+6);ctx.lineTo(x,y+2);ctx.lineTo(x+4,y+6);ctx.closePath();ctx.fill();
- ctx.font='11px Tahoma';ctx.textAlign='center';ctx.fillText(translate('N',language),x,y-23);
+ ctx.font=language === 'fa' ? '11px Vazirmatn, Tahoma' : '11px Tahoma';
+ ctx.textAlign='center';ctx.fillText(translate('N',language),x,y-23);
 }

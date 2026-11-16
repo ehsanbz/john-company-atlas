@@ -145,3 +145,27 @@ html[lang="fa"] .marker span { direction:rtl; }
 @media(max-width:1000px) {
  .network-scroll-hint { display:block; }
 }
+
+@font-face {
+ font-family:Vazirmatn;
+ src:url('./assets/fonts/Vazirmatn.woff2') format('woff2');
+ font-style:normal;
+ font-weight:100 900;
+ font-display:swap;
+}
+html[lang="fa"] {
+ --serif:Vazirmatn,Tahoma,sans-serif;
+ --sans:Vazirmatn,Tahoma,sans-serif;
+}
+.network-controls { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.network-controls button { min-width:44px; min-height:44px; justify-content:center; }
+.network-controls button:disabled { opacity:.45; cursor:default; }
+.network-zoom { min-width:4em; text-align:center; }
+.network-pan-help { margin-block:10px; font-size:.85rem; color:var(--muted); }
+.network-scroll { direction:ltr; height:480px; cursor:grab; overscroll-behavior-x:contain; }
+.network-scroll.panning { cursor:grabbing; user-select:none; }
+.network-stage { position:relative; }
+.full-network { width:1100px; min-width:0; transform-origin:top left; }
+html[lang="fa"] .full-network .relation-node { direction:rtl; }
+@media(max-width:700px) { .network-scroll { height:400px; } }
+.network-stage { overflow:clip; }

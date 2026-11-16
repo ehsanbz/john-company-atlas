@@ -236,7 +236,13 @@ function renderMap(target,state){
  const [x,y]=point([m.lon,m.lat]);
  return '<a class="marker '+(state.selected===m.id?'selected':'')+'" data-label="'+escape(m.label)+'" href="'+withLanguage('?'+(state.preview?'entry='+m.id:'view=map&year='+state.year+'&geo='+state.geo+'&layer='+encodeURIComponent(state.layer)+'&selected='+m.id+(state.routes?'&routes=1':'')))+'" style="left:'+x/w*100+'%;top:'+y/h*100+'%" aria-label="'+escape(t(m.label))+' · '+t(m.layer)+'"><i aria-hidden="true"></i><span>'+escape(t(m.label))+'</span></a>';
  }).join('')+'</div>';
- drawMap(box.querySelector('canvas'),state.geo,activeRoutes,language);
+ const canvas=box.querySelector('canvas');
+ drawMap(canvas,state.geo,activeRoutes,language);
+ if (language==='fa') {
+  document.fonts.load('13px Vazirmatn').then(fonts=>{
+   if (fonts.length && canvas.isConnected) drawMap(canvas,state.geo,activeRoutes,language);
+  }).catch(()=>{ /* Keep the rendered fallback font if loading fails. */ });
+ }
  return {visible,activeRoutes};
 }
 function mapPage(){
