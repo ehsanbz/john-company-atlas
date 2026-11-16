@@ -226,7 +226,17 @@ const persian = {
   "Historical profiles": "پرونده‌های تاریخی",
   "Browse the cards and tiles, then open an entry to read about the people, places and events it represents.": "کارت‌ها و کاشی‌ها را مرور کنید و برای آشنایی با اشخاص، مکان‌ها و رویدادهای مرتبط، مدخل آن‌ها را باز کنید.",
   "Relationships": "روابط",
-  "Open the original game image": "باز کردن تصویر اصلی بازی"
+  "Open the original game image": "باز کردن تصویر اصلی بازی",
+  "Relationship map": "نقشهٔ روابط",
+  "Choose a person, polity, place, or event to see its documented connections. Follow the links for historical profiles and game cards.": "یک شخص، دولت، مکان یا رویداد را انتخاب کنید تا پیوندهای مستند آن را ببینید. از پیوندها به پرونده‌های تاریخی و کارت‌های بازی بروید.",
+  "Focus on": "نمایش روابطِ",
+  "Show connections": "نمایش پیوندها",
+  "Polity": "قدرت سیاسی",
+  "Documented connections": "پیوندهای مستند",
+  "Read historical profile": "خواندن پروندهٔ تاریخی",
+  "Related game cards": "کارت‌های بازی مرتبط",
+  "Company and Parliament diagram": "نمودار کمپانی و پارلمان",
+  "Explore relationships": "کاوش در روابط"
 };
 
 export const translate = (text, language) => language === 'fa' && Object.hasOwn(persian,text) ? persian[text] : text;

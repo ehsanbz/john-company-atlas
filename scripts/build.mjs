@@ -5,6 +5,17 @@ import {entries,byId,sources,markers,routes,timeline,componentTypes} from '../sr
 import {persianEntries} from '../src/persian.mjs';
 import {artwork,imagesFor} from '../src/artwork.mjs';
 import {chapters} from '../src/story.mjs';
+import {relationships} from '../src/relationships.mjs';
+
+const relationshipPairs = new Set();
+for (const {first,second,description,citations} of relationships) {
+ assert.ok(byId[first] && byId[second] && first !== second,'Invalid relationship: '+first+' / '+second);
+ assert.ok(description.every(Boolean) && citations.length,'Missing relationship text or source');
+ for (const id of citations) assert.ok(Object.hasOwn(sources,id),'Missing relationship source '+id);
+ const pair = [first,second].sort().join('/');
+ assert.ok(!relationshipPairs.has(pair),'Duplicate relationship '+pair);
+ relationshipPairs.add(pair);
+}
 
 for (const [key,url] of Object.entries(artwork)) {
   assert.equal(new URL(url).hostname,'img.ludex.dev');
