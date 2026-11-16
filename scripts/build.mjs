@@ -1,8 +1,25 @@
 import assert from 'node:assert/strict';
-import {cp,mkdir,writeFile} from 'node:fs/promises';
-import {entries,byId,sources,markers,routes,timeline} from '../src/atlas.mjs';
+import {cp,mkdir,readFile,writeFile} from 'node:fs/promises';
+import {entries,byId,sources,markers,routes,timeline,componentTypes} from '../src/atlas.mjs';
 
 import {persianEntries} from '../src/persian.mjs';
+import {artwork,imagesFor} from '../src/artwork.mjs';
+import {chapters} from '../src/story.mjs';
+
+for (const [key,url] of Object.entries(artwork)) {
+  assert.equal(new URL(url).hostname,'img.ludex.dev');
+  const image=await readFile(new URL('../src/assets/game/'+key+'.webp',import.meta.url));
+  assert.equal(image.toString('ascii',8,12),'WEBP','Invalid game image '+key);
+}
+for (const entry of entries) {
+  const images=imagesFor(entry);
+  if(componentTypes.includes(entry.type)) assert.ok(images.length,'No game image for '+entry.id);
+  for (const key of images) assert.ok(Object.hasOwn(artwork,key),'Missing game image '+key);
+}
+for (const chapter of chapters) {
+  assert.ok(Object.hasOwn(artwork,chapter.image));
+  for (const id of chapter.entries) assert.ok(Object.hasOwn(byId,id),'Missing story entry '+id);
+}
 
 assert.deepEqual(Object.keys(persianEntries).sort(),entries.map(entry=>entry.id).sort(),'Persian entries must match the English IDs');
 assert.equal(Object.keys(byId).length,entries.length,'Entry IDs must be unique');

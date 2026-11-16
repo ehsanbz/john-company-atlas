@@ -2,11 +2,14 @@ import {entries as englishEntries,sources,componentTypes,timeline,markers,routes
 import {drawMap,projection} from './cartography.mjs';
 import {translate,localNumber,normalizeSearch} from './locale.mjs';
 import {persianEntries} from './persian.mjs';
+import {imagesFor,imagePath} from './artwork.mjs';
+import {chapters} from './story.mjs';
 
 const main = document.querySelector('main');
 const params = new URLSearchParams(location.search);
 const language = params.get('lang') === 'fa' ? 'fa' : 'en';
 const t = text => translate(text,language);
+const bilingual = ([en,fa]) => language === 'fa' ? fa : en;
 const number = value => localNumber(value,language);
 const entries = englishEntries.map(entry => {
  const persian = persianEntries[entry.id];
@@ -46,7 +49,38 @@ const link = (id,label) => '<a href="'+withLanguage('?entry='+encodeURIComponent
 const cite = ids => '<ul class="citations">'+ids.map(id=>'<li><a target="_blank" rel="noopener" href="'+escape(sources[id][1])+'">'+'<bdi lang="en">'+escape(sources[id][0])+'</bdi>'+' ↗</a></li>').join('')+'</ul>';
 const tag = text => '<span class="eyebrow">'+escape(t(text))+'</span>';
 const heading = (eyebrow,title,intro) => '<div class="pagehead wrap">'+tag(eyebrow)+'<h1>'+title+'</h1>'+(intro?'<p class="intro">'+intro+'</p>':'')+'</div>';
-const card = entry => '<a class="entrycard" href="'+withLanguage('?entry='+entry.id)+'">'+tag(t(entry.type)+(entry.year?' · '+number(entry.year):''))+'<h3>'+escape(entry.title)+'</h3><p>'+escape(entry.body.slice(0,140))+'…</p><span class="arrow" aria-hidden="true">↗</span></a>';
+function componentImage(key, title, eager = false) {
+ return `<a class="artifact-image" href="${imagePath(key)}" target="_blank" rel="noopener">
+   <img src="${imagePath(key)}" alt="${escape(title)}" ${eager ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async">
+ </a>`;
+}
+
+function artworkCredit() {
+ return `<figcaption>${t('Game artwork · Wehrlegig Games')} ·
+   <a href="${sources.license[1]}">CC BY-NC-SA 4.0</a>
+ </figcaption>`;
+}
+
+function card(entry) {
+ const component = componentTypes.includes(entry.type);
+ const context = component ? historicalContext(entry)[0] : entry;
+ const image = component && imagesFor(entry)[0];
+ return `<a class="entrycard ${image ? 'illustrated-card' : ''}" href="${withLanguage('?entry='+entry.id)}">
+  ${image ? `<img src="${imagePath(image)}" alt="" loading="lazy" decoding="async">` : ''}
+  <div>${tag(t(entry.type)+(entry.year?' · '+number(entry.year):''))}
+  <h3>${escape(entry.title)}</h3>
+  ${context ? `<p>${escape(context.body.slice(0,140))}…</p>` : ''}
+  <span class="arrow" aria-hidden="true">↗</span></div>
+ </a>`;
+}
+
+function historicalContext(entry) {
+ const related = entry.related.map(id=>byId[id]);
+ return [
+  ...related.filter(item=>item.type==='History'),
+  ...related.filter(item=>item.type!=='History' && !componentTypes.includes(item.type)),
+ ].slice(0,3);
+}
 function set(title,html){
  document.title=title+' · '+t('John Company Atlas');
  main.innerHTML=html;
@@ -68,23 +102,107 @@ function searchForm(value=''){
  return `<form class="searchform" action="./"><input type="hidden" name="view" value="search"><label class="sr" for="query">${t("Search the atlas")}</label><input id="query" name="q" type="search" value="`+escape(value)+`" placeholder="${t("Search Bengal, a law, a person…")}"><button>${t("Search")} <span aria-hidden="true">↗</span></button></form>`;
 }
 function home(){
- set(t("Historical companion"), '<section class="hero"><div class="wrap herogrid"><div class="herocopy">'+tag(t("An unofficial companion · Second Edition"))+`<h1>${t("A company.")}<br>${t("An empire.")}<br><em>${t("A world of interests.")}</em></h1><p>${t("Follow the people, places and institutions behind ")}<cite>${t("John Company")}</cite>${t(". Explore how trade, family ambition and political power remade a connected world.")}</p><a class="button gold" href="?view=map">${t("Explore the atlas")} <span aria-hidden="true">↗</span></a><a class="textlink" href="?view=scenarios">${t("Choose a scenario →")}</a><p class="byline">${t("A historical companion to the game by Cole Wehrle")}<br>${t("Published by Wehrlegig Games")}</p></div><div class="heroatlas"><div id="hero-map" class="mapframe hero-map"></div><div class="mapcaption"><span>${t("THE INDIAN OCEAN WORLD")}</span><span>${t("1710 — 1858")}</span></div></div></div></section><section class="quicksearch wrap">`+searchForm()+'</section><section class="wrap section"><div class="sectionhead"><div>'+tag(t("Follow the connections"))+`<h2>${t("Begin with what’s on the table.")}</h2></div><a href="?view=components">${t("Browse the component index →")}</a></div><div class="threegrid"><a class="feature" href="?view=scenarios"><span class="featureicon">◷</span><h3>${t("Four ways into history")}</h3><p>${t("Start in 1710, 1758 or 1813. Understand the world each setup compresses.")}</p><span>${t("Scenarios →")}</span></a><a class="feature" href="?view=company"><span class="featureicon">♜</span><h3>${t("Who holds the power?")}</h3><p>${t("Trace appointments, commercial interests and the reach of Parliament.")}</p><span>${t("Company &amp; Parliament →")}</span></a><a class="feature" href="?view=timeline"><span class="featureicon">⟶</span><h3>${t("Trade becomes government")}</h3><p>${t("Connect the game’s turning points to a documented historical chronology.")}</p><span>${t("Timeline →")}</span></a></div></section><section class="band"><div class="wrap section"><div class="sectionhead"><div>`+tag(t("A connected history"))+`<h2>${t("Look beyond the Company’s accounts.")}</h2></div><a href="?view=people">${t("People, places &amp; glossary →")}</a></div><div class="threegrid">`+['bengal','jagat-sheth','calico-acts'].map(id=>card(byId[id])).join('')+'</div></div></section>');
- renderMap('hero-map',{year:1758,layer:'All',geo:'india',preview:true});
+ set(t('Historical companion'),`
+  <section class="hero">
+   <div class="wrap herogrid">
+    <div class="herocopy">
+     ${tag(t('John Company · Historical spin-off'))}
+     <h1>${t('Trade, empire and resistance')}</h1>
+     <p>${t('Follow the East India Company from its trading settlements to territorial rule, and discover the people and communities who shaped and resisted its power.')}</p>
+     <a class="button gold" href="?view=story">${t('Read the historical story')}</a>
+     <a class="textlink" href="?view=map">${t('Explore the atlas')}</a>
+    </div>
+    <figure class="heroatlas board-art">
+     ${componentImage('board-numbered',t('John Company game board'),true)}
+     ${artworkCredit()}
+    </figure>
+   </div>
+  </section>
+  <section class="quicksearch wrap">${searchForm()}</section>
+  <section class="wrap section">
+   <div class="sectionhead"><h2>${t('Explore the history')}</h2>
+   <a href="?view=people">${t('People, places &amp; glossary →')}</a></div>
+   <div class="threegrid">${['plassey','diwani-grant','uprising-1857'].map(id=>card(byId[id])).join('')}</div>
+  </section>
+  <section class="band"><div class="wrap section">
+   <div class="sectionhead"><h2>${t('From the game to the history')}</h2>
+   <a href="?view=components">${t('Browse the illustrated catalogue')}</a></div>
+   <div class="threegrid">${['president-of-bengal','calico-acts','scenario-1813'].map(id=>card(byId[id])).join('')}</div>
+  </div></section>`);
 }
+
+function storyPage(){
+ const title=t('Historical narrative');
+ set(title,heading(t('1710 — 1858'),title,t('Six chapters trace Company trade, expansion and rule. Game artwork appears beside the history it helps you explore.'))+`
+  <section class="wrap story">
+   ${chapters.map(chapter=>`
+    <article class="story-chapter">
+     <div>
+      ${tag(number(chapter.period))}
+      <h2>${bilingual(chapter.title)}</h2>
+      <p class="bodycopy">${bilingual(chapter.text)}</p>
+      <div class="inline-related">${chapter.entries.map(id=>link(id)).join('')}</div>
+     </div>
+     <figure class="entry-art">
+      ${componentImage(chapter.image,t('Game component connected to this chapter'))}
+      ${artworkCredit()}
+     </figure>
+    </article>`).join('')}
+  </section>`);
+}
+
 function entryPage(){
  const entry=byId[params.get('entry')];
- if(!entry){set(t("Entry unavailable"),heading(t("Catalogue"),t("Entry unavailable"),t("Use global search to find an entry."))+'<div class="wrap">'+searchForm()+'</div>');return;}
+ if(!entry){
+  set(t('Entry unavailable'),heading(t('Catalogue'),t('Entry unavailable'),t('Use global search to find an entry.'))+'<div class="wrap">'+searchForm()+'</div>');
+  return;
+ }
  const reverse=entries.filter(other=>other.related.includes(entry.id)).map(other=>other.id);
  const related=[...new Set([...entry.related,...reverse])].filter(id=>id!==entry.id);
  const component=componentTypes.includes(entry.type);
- set(entry.title,'<article class="wrap article"><a class="back" href="?view='+(component?'components':'search')+'">← '+(component?t("Component index"):t("Explore entries"))+'</a>'+tag(t(entry.type)+(entry.year?' · '+number(entry.year):''))+'<h1>'+escape(entry.title)+'</h1>'+(entry.aliases.length?`<p class="aliases">${t("Also indexed as ")}`+entry.aliases.map(alias=>'<bdi>'+escape(alias)+'</bdi>').join(' · ')+'</p>':'')+'<div class="articlegrid"><div><p class="bodycopy">'+escape(entry.body)+'</p>'+cite(entry.citations)+(component?'<aside class="note"><strong>'+escape(t(entry.connection||'Scenario abstraction'))+'</strong><p>'+((entry.type==='Event tile')?t("These event families describe recurring conditions. A link to an incident provides context. These links are thematic and the event’s outcome depends on the game state."):t("The historical explanation is original interpretation of the component’s subject. Historical Acts and game laws can operate at different dates and through different procedures."))+`</p><p>${t("Inventory status · ")}`+(entry.type==='Law'&&entry.id==='calico-acts'?t("Title confirmed in the publisher’s rulebook example on printed page 34."):t("Checked against the publisher’s print-and-play sheets. The official errata page was unavailable."))+'</p></aside>':'')+(entry.variants?`<h2>${t("Physical tile variants")}</h2><ul>`+entry.variants.map(v=>'<li>'+escape(number(v.replace(/^[A-Za-z]+/,t)))+'</li>').join('')+'</ul>':'')+`</div><aside class="related"><h2>${t("Follow the connections")}</h2>`+related.map(id=>'<div>'+tag(byId[id].type)+link(id)+'</div>').join('')+'<a class="button outline" href="?view=map&selected='+entry.id+`">${t("Locate in the atlas ↗")}</a>`+(entry.year?'<a href="?view=timeline&focus='+entry.id+`">${t("Open in the timeline →")}</a>`:'')+'</aside></div></article>');
+ const context=component ? historicalContext(entry) : [];
+ const images=imagesFor(entry);
+ const aliases=entry.aliases.map(alias=>'<bdi>'+escape(alias)+'</bdi>').join(' · ');
+ const variants=entry.variants?.map(variant=>`<li>${escape(number(variant.replace(/^[A-Za-z]+/,t)))}</li>`).join('');
+ set(entry.title,`
+  <article class="wrap article">
+   <a class="back" href="?view=${component ? 'components' : 'story'}">${component ? t('Illustrated catalogue') : t('Historical narrative')}</a>
+   ${tag(t(entry.type)+(entry.year?' · '+number(entry.year):''))}
+   <h1>${escape(entry.title)}</h1>
+   ${aliases ? `<p class="aliases">${t('Also indexed as ')}${aliases}</p>` : ''}
+   <div class="articlegrid">
+    <div>
+     ${context.length ? `
+      <h2>${t('Historical context')}</h2>
+      ${context.map(item=>`<section class="context-item">
+       <h3>${link(item.id)}</h3>
+       <p class="bodycopy">${escape(item.body)}</p>
+       ${cite(item.citations)}
+      </section>`).join('')}
+      <details class="connection-note">
+       <summary>${t('Connection to the game')}</summary>
+       <p>${escape(entry.body)}</p>${cite(entry.citations)}
+       ${variants ? `<p>${t('Physical tile variants')}</p><ul>${variants}</ul>` : ''}
+      </details>` : `<p class="bodycopy">${escape(entry.body)}</p>${cite(entry.citations)}`}
+    </div>
+    <aside class="related">
+     ${images.length ? `<figure class="entry-art"><div class="artifact-gallery ${images.length>1?'multiple':''}">
+       ${images.map((key,index)=>componentImage(key,entry.title+' · '+t('Game artwork')+' '+number(index+1))).join('')}
+      </div>${artworkCredit()}</figure>` : ''}
+     <h2>${t('Follow the connections')}</h2>
+     ${related.map(id=>`<div class="related-entry">${tag(byId[id].type)}${link(id)}</div>`).join('')}
+     <a class="button outline" href="?view=map&selected=${entry.id}">${t('Locate in the atlas ↗')}</a>
+     ${entry.year ? `<a href="?view=timeline&focus=${entry.id}">${t('Open in the timeline →')}</a>` : ''}
+    </aside>
+   </div>
+  </article>`);
 }
 function catalogue(mode){
  const isScenarios=mode==='scenarios',isPeople=mode==='people';
- const title=isScenarios?t("Choose your starting world."):isPeople?t("People, places &amp; language."):t("From component to context.");
- const introduction=isScenarios?t("Two 1710 variants share an opening world. Each scenario compresses historical time and relationships."):isPeople?t("Browse historical actors, trading centers and the terms used across the game."):t("17 office cards, 26 laws including Deregulation, seven India event families covering 20 tiles, and scenario materials. Read the coverage notes for verification limits.");
+ const title=isScenarios?t('Historical starting points'):isPeople?t("People, places &amp; language."):t('Illustrated catalogue');
+ const introduction=isScenarios?t("Two 1710 variants share an opening world. Each scenario compresses historical time and relationships."):isPeople?t("Browse historical actors, trading centers and the terms used across the game."):t('Browse the cards and tiles, then open an entry to read about the people, places and events it represents.');
  const allowed=isScenarios?['Scenario']:isPeople?['Person','Community','Place','Region','Glossary']:componentTypes;
- set(title,heading(t("The companion"),title,introduction)+`<section class="wrap"><div class="filters"><label>${t("Find an entry ")}<input id="filter-query" type="search" placeholder="${t("Name or alias")}"></label><label>${t("Type ")}<select id="filter-type"><option value="">${t("All types")}</option>`+allowed.map(type=>'<option value="'+type+'">'+t(type)+'</option>').join('')+`</select></label><a href="?view=sources#coverage">${t("Coverage notes ↗")}</a></div><p id="count" role="status"></p><div id="catalogue" class="threegrid"></div></section>`);
+ set(title,heading(isPeople ? t('Historical profiles') : t('John Company · Historical spin-off'),title,introduction)+`<section class="wrap"><div class="filters"><label>${t("Find an entry ")}<input id="filter-query" type="search" placeholder="${t("Name or alias")}"></label><label>${t("Type ")}<select id="filter-type"><option value="">${t("All types")}</option>`+allowed.map(type=>'<option value="'+type+'">'+t(type)+'</option>').join('')+`</select></label><a href="?view=sources#coverage">${t("Coverage notes ↗")}</a></div><p id="count" role="status"></p><div id="catalogue" class="threegrid"></div></section>`);
  const update=()=>{
   const q=normalize(document.querySelector('#filter-query').value.trim());
   const type=document.querySelector('#filter-type').value;
@@ -129,6 +247,8 @@ function mapPage(){
  document.querySelector('#route-notes').innerHTML=result.activeRoutes.length?`<h3>${t("Routes shown")}</h3>`+result.activeRoutes.map(r=>'<p>'+link(r.id,t(r.label))+`${t(" · approximate schematic path")}</p>`+cite([r.source])).join(''):'';
 }
 function timelinePage(){
+ const focused = byId[params.get('focus')];
+ const initialType = focused?.type === 'Scenario' ? 'Scenario' : 'History';
  set(t("Timeline"),heading(t("1710 — 1858"),t("The terms of power keep changing."),t("Scenario starts sit alongside documented history. The decisions and dates generated during a game can diverge from this chronology."))+`<section class="wrap"><div class="filters"><label>${t("From ")}<input id="timeline-from" type="number" min="1710" max="1858" value="1710"></label><label>${t("To ")}<input id="timeline-to" type="number" min="1710" max="1858" value="1858"></label><label>${t("Show ")}<select id="timeline-type"><option value="">${t("History &amp; scenario starts")}</option><option value="History">${t("Documented history")}</option><option value="Scenario">${t("Scenario starts")}</option></select></label></div><p role="status" id="timeline-count"></p><div id="timeline" class="timeline"></div></section>`);
  function update(){
   const from=Number(document.querySelector('#timeline-from').value);
@@ -138,8 +258,9 @@ function timelinePage(){
   document.querySelector('#timeline-count').textContent=number(found.length)+t(" entries")+(from>to?t(" · choose an end after the start"):'');
   document.querySelector('#timeline').innerHTML=found.map(e=>'<article id="'+e.id+'" class="timeitem"><div class="timeyear">'+number(e.year)+'</div><div>'+tag(e.type==='Scenario'?t("Game scenario start"):t("Documented historical event"))+'<h2>'+link(e.id)+'</h2><p>'+escape(e.body)+'</p>'+cite(e.citations)+'<div class="inline-related">'+e.related.slice(0,3).map(id=>link(id)).join('')+'</div></div></article>').join('');
  }
+ document.querySelector('#timeline-type').value=initialType;
  ['timeline-from','timeline-to','timeline-type'].forEach(id=>document.getElementById(id).addEventListener('input',update));update();
- const focused=document.getElementById(params.get('focus'));if(focused)focused.scrollIntoView();
+ if (focused) document.getElementById(focused.id)?.scrollIntoView();
 }
 const institutionIds=['families','shareholders','directors','chairman','regional-administration','parliament'];
 function companyPage(){
@@ -149,7 +270,7 @@ function companyPage(){
  set(t("Company and Parliament"),heading(t("Institutions &amp; interests"),t("Who can direct the Company?"),t("Choose a node to follow the relationships between families, Company institutions and the British state. The diagram compresses changing historical arrangements."))+`<section class="wrap"><form class="maptools"><input type="hidden" name="view" value="company"><label>${t("Institutional context ")}<select name="year">`+[1710,1758,1773,1784,1813,1833,1858].map(y=>'<option value="'+y+'" '+(y===year?'selected':'')+'>'+number(y)+'</option>').join('')+`</select></label><button>${t("Update diagram")}</button></form><div class="companygrid"><div class="institutiondiagram">`+institutionIds.map((id,i)=>'<div class="diagramrow"><a class="node '+(selected.id===id?'selected':'')+'" href="?view=company&year='+year+'&selected='+id+'">'+escape(byId[id].title)+'</a>'+(i<institutionIds.length-1?'<div class="connector '+(i===4?'dashed':'')+'">'+escape([t("Members acquire stock and seek posts"),t("Qualifying proprietors elect directors"),t("Directors manage and appoint"),t("Instructions, budgets and appointments"),t("Charter and parliamentary oversight")][i])+'</div>':'')+'</div>').join('')+'<p class="diagramnote">'+escape(oversight)+(year>=1833?t(". Commercial operations cease."):'.')+(year>=1858?t(" Crown government replaces Company administration."):'')+'</p></div><aside class="mapdetail">'+tag(selected.type)+'<h2>'+escape(selected.title)+'</h2><p>'+escape(selected.body)+'</p>'+cite(selected.citations)+'<p>'+link(selected.id,t("Read full entry →"))+`</p><h3>${t("Connected offices &amp; laws")}</h3>`+[...new Set([...selected.related,...(selected.id==='regional-administration'?['president-of-bengal','governor-of-bengal','governor-general-office']:[])])].map(id=>'<p>'+link(id)+'</p>').join('')+`</aside></div><h2>${t("Authority changes over time")}</h2><div class="threegrid">`+['regulating-act','oversight-1784','act-1833'].map(id=>card(byId[id])).join('')+`</div><aside class="note">${t("The Chairman and families are game-facing points of entry. Historical directors acted as a body, presidencies contained councils and subordinate establishments, and rulers and communities in South Asia pursued their own interests. Follow the regional profiles for those contexts.")}</aside></section>`);
 }
 function sourcesPage(){
- set(t("Sources and credits"),heading(t("Research &amp; attribution"),t("Sources, scope &amp; open questions."),t("An unofficial English-language historical companion to John Company: Second Edition, designed by Cole Wehrle and published by Wehrlegig Games."))+`<article class="wrap prose"><section id="coverage"><h2>${t("Component coverage")}</h2><p>${t("The catalogue covers the names and historical themes of 17 office cards, 26 law cards including the two-sided Deregulation card, seven event families covering 20 physical India event tiles, four scenario variants across three starting years, and the scenario/setup card sets collectively. Each of the 20 event copies is listed under its family by reverse-side region and modifier where applicable.")}</p><p>${t("Office, law and scenario titles were checked against the publisher’s Bridge card fronts, pages 4–9. The MiniEuro sheets identify the dated setup cards and mark the extras. India event families and region pairings were checked using the Pocket Guide to India on page 10, the Ganjifa print sheets and the photographed component gallery. The official errata page returned HTTP 403 during the review on 16 November 2026. Numbered setup cards are represented as sets. Prestige, blackmail, failure and Crown solo materials are outside this catalogue.")}</p>`+cite(['publisher','pnp','bridge','mini','ganjifa','rules','rulesMirror','cards','errata','bgg'])+`</section><section><h2>${t("How to read the historical links")}</h2><p>${t("Entries distinguish named historical references, broader patterns and interpretations. A generic event can be connected to a documented example without having been designed to depict that incident. The timeline places actual events beside labeled scenario starts. Source citations support the preceding entry paragraph. Interpretive comparisons with game procedures remain the atlas author’s.")}</p><p>${t("Banglapedia supplies South Asian scholarship on provincial government, banking, revenue and rural society. NCERT supplies Indian educational history. Parliament and India Office records give evidence of British institutional interests. Parliamentary speeches are situated arguments, with retrospective claims and contested assessments. Museum and archive catalogues supply further context. This initial edition has short profiles and emphasizes Bengal. Coverage of southern and northwestern polities is introductory.")}</p><p>${t("Contested points are labeled in their entries, including the Nanda Kumar prosecution. Famine mortality figures are omitted because estimates are uncertain. Dates on the map show broad context and the recorded year of a battle. Route lines are approximate sketches. The map uses points in place of territorial polygons.")}</p></section><section><h2>${t("Asset rights &amp; credits")}</h2>`+credits.map(([title,body])=>'<h3>'+escape(t(title))+'</h3><p>'+escape(t(body))+'</p>').join('')+`<p>${t("The first-printing rulebook (2022, p. 48) identifies the game’s licence as Creative Commons Attribution-NonCommercial-ShareAlike 4.0. Cole Wehrle also announced the kit on BackerKit. Cole Wehrle’s print-and-play note explains how to assemble a set. It does not specify asset-level reuse terms. Before importing artwork, confirm the licence attached to that particular second-edition file, its attribution and any underlying third-party rights. No third-party illustrations, map layers, remote fonts or game asset files are used by this build. The schematic coastline, route sketches, CSS and diagram are original.")}</p><p>${t("Original prose and code in this project are offered under CC BY-NC-SA 4.0. Attribute this atlas, identify changes, use it noncommercially and share adaptations under the same terms. The licence does not grant rights to external source pages or to the game’s trademarks. There is no publisher endorsement.")}</p>`+cite(['rulesMirror','design','backerkit','license','pamir'])+`</section><section><h2>${t("Source register")}</h2><p>${t("Review date · 16 November 2026. Links open the original records. Some require a browser or may be unavailable.")}</p>`+cite(Object.keys(sources))+'</section></article>');
+ set(t("Sources and credits"),heading(t("Research &amp; attribution"),t("Sources, scope &amp; open questions."),t("An unofficial English-language historical companion to John Company: Second Edition, designed by Cole Wehrle and published by Wehrlegig Games."))+`<article class="wrap prose"><section id="coverage"><h2>${t("Component coverage")}</h2><p>${t("The catalogue covers the names and historical themes of 17 office cards, 26 law cards including the two-sided Deregulation card, seven event families covering 20 physical India event tiles, four scenario variants across three starting years, and the scenario/setup card sets collectively. Each of the 20 event copies is listed under its family by reverse-side region and modifier where applicable.")}</p><p>${t("Office, law and scenario titles were checked against the publisher’s Bridge card fronts, pages 4–9. The MiniEuro sheets identify the dated setup cards and mark the extras. India event families and region pairings were checked using the Pocket Guide to India on page 10, the Ganjifa print sheets and the photographed component gallery. The official errata page returned HTTP 403 during the review on 16 November 2026. Numbered setup cards are represented as sets. Prestige, blackmail, failure and Crown solo materials are outside this catalogue.")}</p>`+cite(['publisher','pnp','bridge','mini','ganjifa','rules','rulesMirror','cards','errata','bgg'])+`</section><section><h2>${t("How to read the historical links")}</h2><p>${t("Entries distinguish named historical references, broader patterns and interpretations. A generic event can be connected to a documented example without having been designed to depict that incident. The timeline places actual events beside labeled scenario starts. Source citations support the preceding entry paragraph. Interpretive comparisons with game procedures remain the atlas author’s.")}</p><p>${t("Banglapedia supplies South Asian scholarship on provincial government, banking, revenue and rural society. NCERT supplies Indian educational history. Parliament and India Office records give evidence of British institutional interests. Parliamentary speeches are situated arguments, with retrospective claims and contested assessments. Museum and archive catalogues supply further context. This initial edition has short profiles and emphasizes Bengal. Coverage of southern and northwestern polities is introductory.")}</p><p>${t("Contested points are labeled in their entries, including the Nanda Kumar prosecution. Famine mortality figures are omitted because estimates are uncertain. Dates on the map show broad context and the recorded year of a battle. Route lines are approximate sketches. The map uses points in place of territorial polygons.")}</p></section><section><h2>${t("Asset rights &amp; credits")}</h2>`+credits.map(([title,body])=>'<h3>'+escape(t(title))+'</h3><p>'+escape(t(body))+'</p>').join('')+`<p>${t("The first-printing rulebook (2022, p. 48) identifies the game’s licence as Creative Commons Attribution-NonCommercial-ShareAlike 4.0. Cole Wehrle also announced the kit on BackerKit. Cole Wehrle’s print-and-play note explains how to assemble a set. It does not specify asset-level reuse terms. Before importing artwork, confirm the licence attached to that particular second-edition file, its attribution and any underlying third-party rights. Game images are from Wehrlegig Games’ print-and-play edition, cropped and reproduced by Ludex. The board image carries Ludex’s numbering. We host the WebP copies as supplied under CC BY-NC-SA 4.0. The schematic maps and diagrams are original.")}</p><p>${t("Original prose and code in this project are offered under CC BY-NC-SA 4.0. Attribute this atlas, identify changes, use it noncommercially and share adaptations under the same terms. The licence does not grant rights to external source pages or to the game’s trademarks. There is no publisher endorsement.")}</p>`+cite(['rulesMirror','design','backerkit','license','pnp','cards','pamir'])+`</section><section><h2>${t("Source register")}</h2><p>${t("Review date · 16 November 2026. Links open the original records. Some require a browser or may be unavailable.")}</p>`+cite(Object.keys(sources))+'</section></article>');
 }
-const pages={home,map:mapPage,timeline:timelinePage,company:companyPage,components:()=>catalogue('components'),scenarios:()=>catalogue('scenarios'),people:()=>catalogue('people'),sources:sourcesPage,search:searchPage,entry:entryPage};
+const pages={home,story:storyPage,map:mapPage,timeline:timelinePage,company:companyPage,components:()=>catalogue('components'),scenarios:()=>catalogue('scenarios'),people:()=>catalogue('people'),sources:sourcesPage,search:searchPage,entry:entryPage};
 (Object.hasOwn(pages,view)?pages[view]:pages.home)();

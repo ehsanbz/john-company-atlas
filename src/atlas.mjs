@@ -65,5 +65,5 @@ export const credits = [
  ['Map coastline and cartographic styling','Original schematic artwork drawn in canvas. Coastlines are simplified and there are no historical boundary polygons.'],
  ['Map locations and lines','Original point data and route sketches. Locations mark representative centers. Routes are approximate, with sources listed beside them. Dates filter displayed context, including the year of a battle or the activity of a polity.'],
  ['Institutional diagram','Original diagram. Solid and dashed lines distinguish Company organization from parliamentary oversight.'],
- ['Game content','Cole Wehrle, designer. Wehrlegig Games, publisher. No card, board or rulebook images are packaged. Component names are provided for reference alongside original historical summaries. The project site describes CC BY-NC-SA 4.0 reuse. Asset-level provenance and any third-party rights should be checked before importing individual files.'],
+ ['Game content','John Company: Second Edition was designed by Cole Wehrle and published by Wehrlegig Games. The illustrated catalogue uses game artwork from the publisher’s print-and-play files as reproduced by Ludex.'],
 ];
