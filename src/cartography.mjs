@@ -1,3 +1,5 @@
+import {translate,localNumber} from './locale.mjs';
+
 // Original simplified coastline paths, in longitude and latitude.
 const india = [
  [63,25],[66,25],[68,23.7],[68.6,22.6],[69.3,22.9],[68.9,22.2],[69.4,21.2],[70.6,20.7],[72,21.3],[72.7,22.3],[72.6,20.4],[72.7,18.9],[73.3,17],[73.4,15.4],[74.4,13.9],[75.2,12.6],[76.2,10.4],[77.55,8.05],[78.45,9.15],[79.55,10.2],[79.8,12.2],[80.3,13.3],[80.1,15.2],[81.15,16.2],[82.3,16.8],[83.3,17.7],[85.3,19.8],[86.8,20.7],[88,21.65],[89,21.55],[90.1,21.8],[91.7,22.05],[92.3,20.7],[93.5,19.7],[94.3,17.6],[95.3,16.15],[96.1,16.4],[97.2,17.3],[98.1,15.5],[98.35,12.8],[99.2,11],[101,8],[108,9],[111,20],[116,26],[118,34],[90,44],[65,42]
@@ -19,7 +21,7 @@ export function projection(view) {
   contains: ({lon,lat})=>lon>=minX&&lon<=maxX&&lat>=minY&&lat<=maxY
  };
 }
-export function drawMap(canvas,view,routes=[]){
+export function drawMap(canvas,view,routes=[],language='en'){
  const {w,h,point}=projection(view);
  const {minX,maxX,minY,maxY,grid,labels}=views[view];
  canvas.width=w*2;
@@ -47,11 +49,11 @@ export function drawMap(canvas,view,routes=[]){
  ctx.fillStyle='#d9dcc070';ctx.font='10px Georgia';
  for(let x=Math.ceil(minX/grid)*grid;x<maxX;x+=grid){
    path([[x,minY],[x,maxY]]);ctx.stroke();
-   ctx.fillText(x+'°',point([x,0])[0]+4,h-10);
+   ctx.fillText(localNumber(x,language)+'°',point([x,0])[0]+4,h-10);
  }
  for(let y=Math.ceil(minY/grid)*grid;y<maxY;y+=grid){path([[minX,y],[maxX,y]]);ctx.stroke();}
- ctx.fillStyle='#e2d9b990';ctx.font='italic 13px Georgia';
- labels.forEach(([name,x,y])=>ctx.fillText(name,...point([x,y])));
+ ctx.fillStyle='#e2d9b990';ctx.font=language === 'fa' ? '13px Tahoma' : 'italic 13px Georgia';
+ labels.forEach(([name,x,y])=>ctx.fillText(translate(name,language),...point([x,y])));
  ctx.setLineDash([5,5]);ctx.lineWidth=2.3;ctx.strokeStyle='#eec984';
  routes.forEach(route=>{path(route.points);ctx.stroke();});
  ctx.setLineDash([]);
@@ -59,5 +61,5 @@ export function drawMap(canvas,view,routes=[]){
  ctx.strokeStyle='#e4cf946e';ctx.fillStyle='#e4cf94';ctx.lineWidth=1;
  ctx.beginPath();ctx.arc(x,y,18,0,Math.PI*2);ctx.stroke();
  ctx.beginPath();ctx.moveTo(x,y-12);ctx.lineTo(x-4,y+6);ctx.lineTo(x,y+2);ctx.lineTo(x+4,y+6);ctx.closePath();ctx.fill();
- ctx.font='11px Georgia';ctx.fillText('N',x-4,y-23);
+ ctx.font='11px Tahoma';ctx.textAlign='center';ctx.fillText(translate('N',language),x,y-23);
 }

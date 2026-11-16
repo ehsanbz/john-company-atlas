@@ -10,16 +10,17 @@
 <script type="module" src="./app.mjs"></script>
 </head>
 <body>
-<a class="skip" href="#content">Skip to content</a>
+<a class="skip" data-text="Skip to content" href="#content">Skip to content</a>
 <header class="top"><div class="bar">
-<a class="brand" href="./"><span class="seal" aria-hidden="true">✦</span><span>John Company <em>Atlas</em></span></a>
+<a class="brand" href="./"><span class="seal" aria-hidden="true">✦</span><span><span data-text="John Company">John Company</span> <em data-text="Atlas">Atlas</em></span></a>
 <nav aria-label="Main navigation">
-<a href="?view=map">Atlas</a><a href="?view=timeline">Timeline</a><a href="?view=company">Company &amp; Parliament</a><a href="?view=components">Components</a><a href="?view=sources">Sources</a>
+<a href="?view=map" data-text="Atlas">Atlas</a><a href="?view=timeline" data-text="Timeline">Timeline</a><a href="?view=company" data-text="Company &amp; Parliament">Company &amp; Parliament</a><a href="?view=components" data-text="Components">Components</a><a href="?view=sources" data-text="Sources">Sources</a>
 </nav>
-<a class="head-search" href="?view=search">Search <span aria-hidden="true">⌕</span></a>
+<a class="head-search" href="?view=search"><span data-text="Search">Search</span> <span aria-hidden="true">⌕</span></a>
+<a class="language-switch" href="?lang=fa" lang="fa" hreflang="fa">فارسی</a>
 </div></header>
 <main id="content" tabindex="-1"></main>
 <noscript><p>This atlas uses JavaScript to display maps, search results and entries. Enable JavaScript to browse.</p></noscript>
-<footer><div class="wrap"><span>John Company Atlas · Unofficial fan project</span><a href="?view=sources">Sources &amp; credits</a></div></footer>
+<footer><div class="wrap"><span data-text="John Company Atlas · Unofficial fan project">John Company Atlas · Unofficial fan project</span><a href="?view=sources" data-text="Sources &amp; credits">Sources &amp; credits</a></div></footer>
 </body>
 </html>

@@ -1,6 +1,8 @@
 # John Company Atlas
 
-An unofficial English-language historical companion to **John Company: Second Edition**, designed by Cole Wehrle and published by Wehrlegig Games. It links game components, scenarios, an atlas, a timeline and historical sources. The [Pax Pamir Spin-off](https://github.com/ehsanbz/Pax-Pamir-Spin-off) supplied the navigation reference.
+An unofficial English and Persian historical companion to **John Company: Second Edition**, designed by Cole Wehrle and published by Wehrlegig Games. It links game components, scenarios, an atlas, a timeline and historical sources. The [Pax Pamir Spin-off](https://github.com/ehsanbz/Pax-Pamir-Spin-off) supplied the navigation reference.
+
+Use **فارسی** or **English** to switch languages on the current page. The Persian edition uses right-to-left layout. Search accepts both languages and recognizes Persian and Arabic numerals and letter variants. Add a Persian title and text in `src/persian.mjs` when adding an entry.
 
 ## Run locally
 

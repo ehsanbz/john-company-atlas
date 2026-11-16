@@ -2,9 +2,13 @@ import assert from 'node:assert/strict';
 import {cp,mkdir,writeFile} from 'node:fs/promises';
 import {entries,byId,sources,markers,routes,timeline} from '../src/atlas.mjs';
 
+import {persianEntries} from '../src/persian.mjs';
+
+assert.deepEqual(Object.keys(persianEntries).sort(),entries.map(entry=>entry.id).sort(),'Persian entries must match the English IDs');
 assert.equal(Object.keys(byId).length,entries.length,'Entry IDs must be unique');
 for (const entry of entries){
   assert.match(entry.id,/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
+  assert.ok(persianEntries[entry.id].title && persianEntries[entry.id].body,entry.id+' lacks Persian text');
   assert.ok(entry.body && entry.citations.length,entry.id);
   for(const id of entry.citations) assert.ok(Object.hasOwn(sources,id),entry.id+' has missing source '+id);
   for(const id of entry.related) assert.ok(Object.hasOwn(byId,id),entry.id+' has missing related entry '+id);
